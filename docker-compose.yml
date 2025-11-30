@@ -1,0 +1,62 @@
+networks:
+
+  app-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24
+          gateway: 10.0.0.254
+
+services:
+
+  datadog-agent:
+    container_name: datadog-agent
+    image: datadog/agent:latest
+    environment:
+      DD_API_KEY: "api-key-goes-here"
+      DD_SITE: "datadoghq.com"
+      DD_APM_ENABLED: "true"
+      DD_BIND_HOST: "0.0.0.0"
+      DD_RECEIVER_PORT: "8126"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
+    ports:
+      - 8126:8126/tcp
+    restart: always
+    networks:
+      - app-network
+
+  python-app-a:
+    container_name: python-app-a
+    build: ./app-a
+    environment:
+      DD_AGENT_HOST: "datadog-agent"
+    ports:
+      - 80:5000
+    networks:
+      - app-network
+    restart: always
+
+  python-app-b:
+    container_name: python-app-b
+    build: ./app-b
+    environment:
+      DD_AGENT_HOST: "datadog-agent"
+    ports:
+      - 81:5000
+    networks:
+      - app-network
+    restart: always
+
+  python-app-c:
+    container_name: python-app-c
+    build: ./app-c
+    environment:
+      DD_AGENT_HOST: "datadog-agent"
+    ports:
+      - 82:5000
+    networks:
+      - app-network
+    restart: always
